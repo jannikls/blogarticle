@@ -8,6 +8,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from datetime import datetime
 
+import shutil
+
 # Fetch webpage content
 def fetch_webpage(url):
     response = requests.get(url)
@@ -61,9 +63,14 @@ def extract_text(html_content):
 
 
 # Generate PDF using ReportLab
-def generate_pdf(flowables, filename):
-    doc = SimpleDocTemplate(filename, pagesize=letter)
+def generate_pdf(flowables, filename, folder='articles'):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    path = os.path.join(folder, filename)
+    doc = SimpleDocTemplate(path, pagesize=letter)
     doc.build(flowables)
+    
+    return path  # Return path for later use
 
 # Create PDF filename
 def create_filename(url):
@@ -77,15 +84,18 @@ def main():
     html_content = fetch_webpage(url)
     flowables = extract_text(html_content)
     filename = create_filename(url)
-    generate_pdf(flowables, filename)
+    path = generate_pdf(flowables, filename)
 
     # Monthly report feature
     report_choice = input("Add this to your monthly report? (y/n): ")
     if report_choice.lower() == 'y':
         monthly_filename = f"Monthly_Report_{datetime.now().strftime('%Y%m%d')}.pdf"
-        if os.path.exists(monthly_filename):
-            with open(monthly_filename, "ab") as f:
-                f.write(open(filename, "rb").read())
+        monthly_path = os.path.join('articles', monthly_filename)
+        
+        if os.path.exists(monthly_path):
+            with open(monthly_path, "ab") as f:
+                f.write(open(path, "rb").read())
+                f.close()  # Close the file
         else:
             generate_pdf(flowables, monthly_filename)
 
