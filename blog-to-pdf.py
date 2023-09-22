@@ -6,7 +6,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from PyPDF2 import PdfFileMerger
+from PyPDF2 import PdfMerger
 from datetime import datetime
 
 def fetch_webpage(url):
@@ -47,13 +47,30 @@ unwanted_phrases = [
     "Connecting to %s",
     "Notify me of new comments via email",
     "Notify me of new posts via email",
-    "This site uses Akismet to reduce spam"
+    "This site uses Akismet to reduce spam",
+    "■", "∆", "Upgrade to paid", "No posts"
 ]
+
+unwanted_elements = ['author-box', 'author-info', 'author-details']  # Add known classes or ids for author boxes
+
 
 def extract_text(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
     for elem in soup.find_all(['script', 'style', 'aside']):
         elem.extract()
+    
+    for elem_class in unwanted_elements:
+        for elem in soup.find_all(class_=elem_class):
+            elem.extract()
+
+        # If Wikipedia, capture references
+    is_wikipedia = 'wikipedia.org' in html_content
+    references = []
+    if is_wikipedia:
+        references_div = soup.find('div', {'class': ['references', 'reflist']})
+        if references_div:
+            references = references_div.find_all('li')
+        
     main_content = soup.find('main') if soup.find('main') else soup
     flowables = []
     
@@ -66,6 +83,13 @@ def extract_text(html_content):
         style = custom_styles.get(elem.name, custom_styles['body'])
         flowables.append(Paragraph(cleaned_text, style))
         flowables.append(Spacer(1, 6))
+
+    if is_wikipedia and references:
+        flowables.append(Paragraph("References", custom_styles['headline']))
+        for ref in references:
+            cleaned_text = ref.get_text()
+            flowables.append(Paragraph(cleaned_text, custom_styles['body']))
+
         
     return flowables
 
@@ -79,7 +103,7 @@ def create_filename(url):
     return f"{today_date}_{clean_url}.pdf"
 
 def append_to_monthly_report(article_path, monthly_path):
-    merger = PdfFileMerger()
+    merger = PdfMerger()
     
     if os.path.exists(monthly_path):
         merger.append(monthly_path)
