@@ -17,14 +17,13 @@ def fetch_webpage(url):
 
 # Custom styles
 custom_styles = {
-    'body': ParagraphStyle(
-        'body',
-        parent=getSampleStyleSheet()['BodyText'],
-        fontName='Times-Roman',
-        fontSize=12,
-        leading=18,
-        textColor=colors.black
-    )
+    'body': ParagraphStyle('body', parent=getSampleStyleSheet()['BodyText'], fontName='Times-Roman', fontSize=12, leading=18, textColor=colors.black),
+    'h1': ParagraphStyle('h1', parent=getSampleStyleSheet()['Heading1'], fontName='Times-Roman', fontSize=24, leading=28, textColor=colors.grey),
+    'h2': ParagraphStyle('h2', parent=getSampleStyleSheet()['Heading2'], fontName='Times-Roman', fontSize=18, leading=22, textColor=colors.grey),
+    'h3': ParagraphStyle('h3', parent=getSampleStyleSheet()['Heading3'], fontName='Times-Roman', fontSize=16, leading=20, textColor=colors.grey),
+    'h4': ParagraphStyle('h4', parent=getSampleStyleSheet()['Heading4'], fontName='Times-Roman', fontSize=14, leading=18, textColor=colors.grey),
+    'h5': ParagraphStyle('h5', parent=getSampleStyleSheet()['Heading5'], fontName='Times-Roman', fontSize=12, leading=16, textColor=colors.grey),
+    'h6': ParagraphStyle('h6', parent=getSampleStyleSheet()['Heading6'], fontName='Times-Roman', fontSize=10, leading=14, textColor=colors.grey)
 }
 
 # Unwanted phrases
@@ -94,10 +93,9 @@ def main():
         
         if os.path.exists(monthly_path):
             with open(monthly_path, "ab") as f:
-                f.write(open(path, "rb").read())
-                f.close()  # Close the file
+                with open(path, "rb") as article_file:
+                    f.write(article_file.read())
         else:
             generate_pdf(flowables, monthly_filename)
-
 if __name__ == "__main__":
     main()
